@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <random>
 
 using namespace std;
 
@@ -29,14 +30,51 @@ struct Apple // Basically the same as SnakeBody, just under a different name for
 	int X, Y;
 };
 
+class RandomGenerator
+{
+public:
+	RandomGenerator()
+	{
+		m_Seed = time(NULL);
+	}
+
+	RandomGenerator(int seed)
+	{
+		m_Seed = seed;
+	}
+
+public:
+	int RandomInt(int min, int max = 1)
+	{
+		uniform_int_distribution<int> Distribution(min, max);
+		return Distribution(m_RandomDevice);
+	}
+
+private:
+	random_device m_RandomDevice;
+	int m_Seed;
+};
+
 void SetCharacterAt(int X, int Y, wchar_t Char)
 {
 	if (X >= 0 && X < ScreenWidth && Y >= 0 && Y < ScreenHeight) Screen[(Y * ScreenWidth) + X] = Char;
 }
 
-void ClearScreenBuffer()
+void ClearScreenBuffer(wchar_t Char = ' ')
 {
-	for (int i = 0; i < ScreenWidth * ScreenHeight; i++) Screen[i] = ' ';
+	for (int i = 0; i < ScreenWidth * ScreenHeight; i++) Screen[i] = Char;
+}
+
+void DisplayScreenBuffer(HANDLE Console)
+{
+	DWORD BytesWritten = 0;
+	WriteConsoleOutputCharacter(Console, Screen, ScreenWidth * ScreenHeight, { 0,0 }, &BytesWritten);
+}
+
+// TODO: find a better name for this function
+int Vector2ToInt(int X, int Y)
+{
+	return (Y * ScreenWidth) + X;
 }
 
 //void GrowSnake(list<SnakeBody>& Snake)
@@ -51,12 +89,13 @@ void ClearScreenBuffer()
 
 int main( void )
 {
-	srand(time(0)); // TODO: possibly switch to uniform_int_distribution
+	//srand(time(0));
 
 	HANDLE Console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	SetConsoleActiveScreenBuffer(Console);
 	SetConsoleTitle(L"Snake - join the OLC discord btw!");
-	DWORD BytesWritten = 0; // consider this junk
+
+	RandomGenerator RandomGen(time(NULL)); // sorry, had to use that weird thing
 
 	vector<SnakeBody> Snake = { {65, 20}, {66, 20}, {67, 20}, {68, 20} };
 	int SnakeDir = SNAKEDIR_WEST;
@@ -99,8 +138,10 @@ int main( void )
 			{
 				Snake.push_back({ Snake.back().X, Snake.back().Y });
 				Score++;
-				Fruit.X = rand() % ScreenWidth - 1;
-				Fruit.Y = rand() % ScreenHeight - 1;
+				/*Fruit.X = rand() % ScreenWidth - 1;
+				Fruit.Y = rand() % ScreenHeight - 1;*/
+				Fruit.X = RandomGen.RandomInt(0, ScreenWidth);
+				Fruit.Y = RandomGen.RandomInt(1, ScreenHeight);
 			}
 
 			// Draw snake
@@ -154,10 +195,12 @@ int main( void )
 
 
 			// Render frame
-			WriteConsoleOutputCharacter(Console, Screen, ScreenWidth * ScreenHeight, { 0,0 }, &BytesWritten);
+			DisplayScreenBuffer(Console);
 		}
-
-		/*wsprintf(&Screen[0], L"Score: %d - GAME OVER!", Score);*/
+		wsprintf(&Screen[Vector2ToInt(50, 13)], L"[      GAME OVER       ]");
+		wsprintf(&Screen[Vector2ToInt(50, 14)], L"[PRESS SPACE TO RESTART]");
+		DisplayScreenBuffer(Console);
+		
 		while (!GetAsyncKeyState(VK_SPACE));
 		// Reset snake
 		Dead = false;
