@@ -72,7 +72,7 @@ int main( void )
 			ClearScreenBuffer();
 
 			// Timing
-			SLEEP(200ms);
+			SLEEP(SnakeDir == SNAKEDIR_NORTH || SnakeDir == SNAKEDIR_SOUTH ? 400ms : 200ms);
 
 			// Drawing
 			wsprintf(&Screen[0], L"Score: %d", Score);
