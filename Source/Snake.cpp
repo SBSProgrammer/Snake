@@ -1,4 +1,4 @@
-﻿#include <Windows.h> // im sorry linux users
+#include <Windows.h> // im sorry linux users
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -10,6 +10,8 @@ using namespace std;
 #define SNAKEDIR_EAST  1
 #define SNAKEDIR_SOUTH 2
 #define SNAKEDIR_WEST  3
+
+#define SLEEP(t) this_thread::sleep_for(t)
 // also im sorry if the code is generally cursed
 
 int ScreenWidth = 120;
@@ -70,7 +72,7 @@ int main( void )
 			ClearScreenBuffer();
 
 			// Timing
-			this_thread::sleep_for(200ms);
+			SLEEP(200ms);
 
 			// Drawing
 			wsprintf(&Screen[0], L"Score: %d", Score);
